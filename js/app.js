@@ -71,43 +71,62 @@ class App {
     }
 
     showError(message) {
-        const errorEl = document.createElement('error-state');
-        errorEl.setAttribute('message', message);
-        this.content.innerHTML = '';
-        this.content.appendChild(errorEl);
+        // Limpiar contenido
+        while (this.content.firstChild) {
+            this.content.removeChild(this.content.firstChild);
+        }
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.style.textAlign = 'center';
+        errorDiv.style.padding = '2rem';
+        
+        const errorMsg = document.createElement('p');
+        errorMsg.style.color = '#e94560';
+        errorMsg.style.marginBottom = '1rem';
+        errorMsg.textContent = message;
+        
+        const retryBtn = document.createElement('button');
+        retryBtn.textContent = 'Reintentar';
+        retryBtn.style.background = '#e94560';
+        retryBtn.style.color = 'white';
+        retryBtn.style.border = 'none';
+        retryBtn.style.padding = '0.5rem 1rem';
+        retryBtn.style.borderRadius = '4px';
+        retryBtn.style.cursor = 'pointer';
+        retryBtn.addEventListener('click', () => this.retry());
+        
+        errorDiv.appendChild(errorMsg);
+        errorDiv.appendChild(retryBtn);
+        this.content.appendChild(errorDiv);
     }
 
     async loadHome() {
         this.abortCurrentRequest();
         this.currentController = new AbortController();
         
-        // LIMPIAR CONTENIDO CORRECTAMENTE
+        // LIMPIAR CONTENIDO
         while (this.content.firstChild) {
             this.content.removeChild(this.content.firstChild);
         }
 
-        // ===== HERO SECTION (creado con createElement, no innerHTML) =====
-        const hero = document.createElement('section');
+        // ===== HERO SECTION =====
+        const hero = document.createElement('div');
         hero.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
         hero.style.color = 'white';
         hero.style.padding = '4rem 1rem';
         hero.style.textAlign = 'center';
         hero.style.marginBottom = '2rem';
         
-        // Crear título
         const heroTitle = document.createElement('h1');
         heroTitle.style.fontSize = '2.5rem';
         heroTitle.style.marginBottom = '1rem';
         heroTitle.textContent = '🎌 Explora el universo del anime';
         
-        // Crear subtítulo
         const heroSubtitle = document.createElement('p');
         heroSubtitle.style.fontSize = '1.2rem';
         heroSubtitle.style.marginBottom = '2rem';
-        heroSubtitle.style.opacity = '0.95';
         heroSubtitle.textContent = 'Descubrí los mejores animes, los más populares y los que están en emisión';
         
-        // Crear contenedor de búsqueda rápida
         const searchContainer = document.createElement('div');
         searchContainer.style.maxWidth = '500px';
         searchContainer.style.margin = '0 auto';
@@ -156,10 +175,9 @@ class App {
         hero.appendChild(heroTitle);
         hero.appendChild(heroSubtitle);
         hero.appendChild(searchContainer);
-        
         this.content.appendChild(hero);
 
-        // ===== TÍTULO DE SECCIÓN =====
+        // ===== TÍTULO SECCIÓN =====
         const sectionTitle = document.createElement('h2');
         sectionTitle.style.padding = '0 1rem';
         sectionTitle.style.marginBottom = '1rem';
@@ -168,9 +186,33 @@ class App {
         sectionTitle.textContent = '🔥 Top Animes';
         this.content.appendChild(sectionTitle);
         
-        // ===== LOADING =====
-        const loading = document.createElement('loading-state');
-        this.content.appendChild(loading);
+        // ===== CONTENEDOR PARA EL GRID (con loading manual) =====
+        const gridContainer = document.createElement('div');
+        gridContainer.style.minHeight = '200px';
+        gridContainer.style.display = 'flex';
+        gridContainer.style.justifyContent = 'center';
+        gridContainer.style.alignItems = 'center';
+        gridContainer.style.padding = '2rem';
+        
+        // Spinner manual (no usar <loading-state> para evitar errores)
+        const spinner = document.createElement('div');
+        spinner.style.width = '50px';
+        spinner.style.height = '50px';
+        spinner.style.border = '4px solid #f3f3f3';
+        spinner.style.borderTop = '4px solid #e94560';
+        spinner.style.borderRadius = '50%';
+        spinner.style.animation = 'spin 1s linear infinite';
+        
+        // Agregar la animación si no existe
+        if (!document.querySelector('#spinnerStyle')) {
+            const style = document.createElement('style');
+            style.id = 'spinnerStyle';
+            style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
+        }
+        
+        gridContainer.appendChild(spinner);
+        this.content.appendChild(gridContainer);
         
         const timeoutId = setTimeout(() => {
             this.currentController.abort();
@@ -187,18 +229,40 @@ class App {
             
             const data = await res.json();
             
-            // Remover loading
-            if (this.content.contains(loading)) {
-                this.content.removeChild(loading);
-            }
+            // Remover el gridContainer con spinner
+            this.content.removeChild(gridContainer);
             
-            // Crear grid con los resultados
+            // Crear grid
             const grid = document.createElement('div');
             grid.className = 'grid-container';
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
+            grid.style.gap = '1.5rem';
+            grid.style.padding = '1.5rem';
+            grid.style.maxWidth = '1200px';
+            grid.style.margin = '0 auto';
             
             data.data.forEach(anime => {
-                const card = document.createElement('anime-card');
-                card.data = anime;
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                card.style.background = 'white';
+                card.style.borderRadius = '8px';
+                card.style.overflow = 'hidden';
+                card.style.cursor = 'pointer';
+                card.style.transition = 'transform 0.2s';
+                card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+                
+                const imageUrl = anime.images?.jpg?.image_url || 'https://via.placeholder.com/200x250?text=No+Image';
+                
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${anime.title}" style="width:100%; height:200px; object-fit:cover;">
+                    <div style="padding:0.5rem;">
+                        <h3 style="font-size:0.9rem; margin-bottom:0.3rem;">${anime.title_english || anime.title}</h3>
+                        <span style="background:#e94560; color:white; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.8rem;">⭐ ${anime.score || 'N/A'}</span>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => this.showDetail(anime.mal_id));
                 grid.appendChild(card);
             });
             
@@ -206,10 +270,7 @@ class App {
             
         } catch (error) {
             clearTimeout(timeoutId);
-            
-            if (this.content.contains(loading)) {
-                this.content.removeChild(loading);
-            }
+            this.content.removeChild(gridContainer);
             
             const errorDiv = document.createElement('div');
             errorDiv.style.textAlign = 'center';
@@ -219,8 +280,8 @@ class App {
             errorMsg.style.color = '#e94560';
             errorMsg.style.marginBottom = '1rem';
             errorMsg.textContent = error.name === 'AbortError' 
-                ? '⏱️ La petición tardó demasiado. Hacé click en reintentar.'
-                : 'Error al cargar animes. Verificá tu conexión.';
+                ? '⏱️ La petición tardó demasiado'
+                : 'Error al cargar animes';
             
             const retryBtn = document.createElement('button');
             retryBtn.textContent = 'Reintentar';
@@ -239,7 +300,7 @@ class App {
     }
 
     loadSearch() {
-        // LIMPIAR CONTENIDO CORRECTAMENTE
+        // LIMPIAR CONTENIDO
         while (this.content.firstChild) {
             this.content.removeChild(this.content.firstChild);
         }
@@ -257,7 +318,7 @@ class App {
         title.textContent = '🔍 Buscar Anime';
         container.appendChild(title);
         
-        // Contenedor de búsqueda
+        // Input de búsqueda
         const searchContainer = document.createElement('div');
         searchContainer.style.display = 'flex';
         searchContainer.style.gap = '0.5rem';
@@ -265,7 +326,7 @@ class App {
         
         const input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'Ej: Naruto, One Piece, Dragon Ball...';
+        input.placeholder = 'Ej: Naruto, One Piece...';
         input.value = this.state.searchQuery;
         input.style.flex = '1';
         input.style.padding = '1rem';
@@ -287,9 +348,33 @@ class App {
         searchContainer.appendChild(btn);
         container.appendChild(searchContainer);
         
-        // Filtro de géneros
-        const genreFilter = document.createElement('genre-filter');
-        container.appendChild(genreFilter);
+        // Filtro de géneros (inline para evitar errores)
+        const filterContainer = document.createElement('div');
+        filterContainer.style.marginBottom = '1rem';
+        filterContainer.style.marginTop = '1rem';
+        
+        const filterLabel = document.createElement('label');
+        filterLabel.style.display = 'block';
+        filterLabel.style.marginBottom = '0.5rem';
+        filterLabel.style.fontWeight = 'bold';
+        filterLabel.textContent = '🏷️ Filtrar por género:';
+        
+        const filterSelect = document.createElement('select');
+        filterSelect.style.width = '100%';
+        filterSelect.style.padding = '0.75rem';
+        filterSelect.style.border = '2px solid #ddd';
+        filterSelect.style.borderRadius = '8px';
+        filterSelect.style.fontSize = '1rem';
+        
+        const loadingOption = document.createElement('option');
+        loadingOption.value = '';
+        loadingOption.textContent = 'Cargando géneros...';
+        filterSelect.appendChild(loadingOption);
+        filterSelect.disabled = true;
+        
+        filterContainer.appendChild(filterLabel);
+        filterContainer.appendChild(filterSelect);
+        container.appendChild(filterContainer);
         
         // Contenedor de resultados
         const resultsContainer = document.createElement('div');
@@ -301,10 +386,26 @@ class App {
         
         let searchTimeout;
         
-        // Escuchar cambios de género
-        genreFilter.addEventListener('genre-change', (e) => {
-            this.state.currentGenre = e.detail.genreId;
-            performSearch();
+        // Cargar géneros
+        fetch('https://api.jikan.moe/v4/genres/anime')
+            .then(res => res.json())
+            .then(data => {
+                filterSelect.innerHTML = '<option value="">Todos los géneros</option>';
+                data.data.forEach(genre => {
+                    const option = document.createElement('option');
+                    option.value = genre.mal_id;
+                    option.textContent = genre.name;
+                    filterSelect.appendChild(option);
+                });
+                filterSelect.disabled = false;
+            })
+            .catch(err => console.error('Error cargando géneros:', err));
+        
+        filterSelect.addEventListener('change', (e) => {
+            this.state.currentGenre = e.target.value;
+            if (input.value.trim() || this.state.currentGenre) {
+                performSearch();
+            }
         });
         
         const performSearch = async () => {
@@ -314,9 +415,23 @@ class App {
             this.abortCurrentRequest();
             this.currentController = new AbortController();
             
+            // Spinner manual
             resultsContainer.innerHTML = '';
-            const loading = document.createElement('loading-state');
-            resultsContainer.appendChild(loading);
+            const spinnerDiv = document.createElement('div');
+            spinnerDiv.style.display = 'flex';
+            spinnerDiv.style.justifyContent = 'center';
+            spinnerDiv.style.padding = '2rem';
+            
+            const spinner = document.createElement('div');
+            spinner.style.width = '40px';
+            spinner.style.height = '40px';
+            spinner.style.border = '4px solid #f3f3f3';
+            spinner.style.borderTop = '4px solid #e94560';
+            spinner.style.borderRadius = '50%';
+            spinner.style.animation = 'spin 1s linear infinite';
+            
+            spinnerDiv.appendChild(spinner);
+            resultsContainer.appendChild(spinnerDiv);
             
             const timeoutId = setTimeout(() => {
                 this.currentController.abort();
@@ -343,29 +458,41 @@ class App {
                     const emptyMsg = document.createElement('div');
                     emptyMsg.style.textAlign = 'center';
                     emptyMsg.style.padding = '3rem';
-                    
-                    const emptyP = document.createElement('p');
-                    emptyP.style.color = '#666';
-                    emptyP.style.fontSize = '1.2rem';
-                    emptyP.textContent = '😢 No se encontraron animes';
-                    
-                    const emptySub = document.createElement('p');
-                    emptySub.style.color = '#999';
-                    emptySub.style.marginTop = '0.5rem';
-                    emptySub.textContent = 'Probá con otra búsqueda o filtro';
-                    
-                    emptyMsg.appendChild(emptyP);
-                    emptyMsg.appendChild(emptySub);
+                    emptyMsg.innerHTML = `
+                        <p style="color:#666; font-size:1.2rem;">😢 No se encontraron animes</p>
+                        <p style="color:#999; margin-top:0.5rem;">Probá con otra búsqueda o filtro</p>
+                    `;
                     resultsContainer.appendChild(emptyMsg);
                     return;
                 }
                 
                 const grid = document.createElement('div');
-                grid.className = 'grid-container';
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
+                grid.style.gap = '1.5rem';
+                grid.style.padding = '0';
                 
                 data.data.forEach(anime => {
-                    const card = document.createElement('anime-card');
-                    card.data = anime;
+                    const card = document.createElement('div');
+                    card.className = 'anime-card';
+                    card.style.background = 'white';
+                    card.style.borderRadius = '8px';
+                    card.style.overflow = 'hidden';
+                    card.style.cursor = 'pointer';
+                    card.style.transition = 'transform 0.2s';
+                    card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+                    
+                    const imageUrl = anime.images?.jpg?.image_url || 'https://via.placeholder.com/200x250?text=No+Image';
+                    
+                    card.innerHTML = `
+                        <img src="${imageUrl}" alt="${anime.title}" style="width:100%; height:200px; object-fit:cover;">
+                        <div style="padding:0.5rem;">
+                            <h3 style="font-size:0.9rem; margin-bottom:0.3rem;">${anime.title_english || anime.title}</h3>
+                            <span style="background:#e94560; color:white; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.8rem;">⭐ ${anime.score || 'N/A'}</span>
+                        </div>
+                    `;
+                    
+                    card.addEventListener('click', () => this.showDetail(anime.mal_id));
                     grid.appendChild(card);
                 });
                 
@@ -375,11 +502,30 @@ class App {
                 clearTimeout(timeoutId);
                 resultsContainer.innerHTML = '';
                 
-                const errorState = document.createElement('error-state');
-                errorState.setAttribute('message', error.name === 'AbortError' 
+                const errorDiv = document.createElement('div');
+                errorDiv.style.textAlign = 'center';
+                errorDiv.style.padding = '2rem';
+                
+                const errorMsg = document.createElement('p');
+                errorMsg.style.color = '#e94560';
+                errorMsg.style.marginBottom = '1rem';
+                errorMsg.textContent = error.name === 'AbortError' 
                     ? '⏱️ La búsqueda tardó demasiado'
-                    : 'Error en la búsqueda');
-                resultsContainer.appendChild(errorState);
+                    : 'Error en la búsqueda';
+                
+                const retryBtn = document.createElement('button');
+                retryBtn.textContent = 'Reintentar';
+                retryBtn.style.background = '#e94560';
+                retryBtn.style.color = 'white';
+                retryBtn.style.border = 'none';
+                retryBtn.style.padding = '0.5rem 1rem';
+                retryBtn.style.borderRadius = '4px';
+                retryBtn.style.cursor = 'pointer';
+                retryBtn.addEventListener('click', performSearch);
+                
+                errorDiv.appendChild(errorMsg);
+                errorDiv.appendChild(retryBtn);
+                resultsContainer.appendChild(errorDiv);
             }
         };
         
@@ -401,12 +547,8 @@ class App {
         });
         
         btn.addEventListener('click', performSearch);
-        
         input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                performSearch();
-            }
+            if (e.key === 'Enter') performSearch();
         });
         
         // Búsqueda inicial
@@ -432,8 +574,22 @@ class App {
             this.content.removeChild(this.content.firstChild);
         }
         
-        const loading = document.createElement('loading-state');
-        this.content.appendChild(loading);
+        // Spinner manual
+        const spinnerContainer = document.createElement('div');
+        spinnerContainer.style.display = 'flex';
+        spinnerContainer.style.justifyContent = 'center';
+        spinnerContainer.style.padding = '2rem';
+        
+        const spinner = document.createElement('div');
+        spinner.style.width = '50px';
+        spinner.style.height = '50px';
+        spinner.style.border = '4px solid #f3f3f3';
+        spinner.style.borderTop = '4px solid #e94560';
+        spinner.style.borderRadius = '50%';
+        spinner.style.animation = 'spin 1s linear infinite';
+        
+        spinnerContainer.appendChild(spinner);
+        this.content.appendChild(spinnerContainer);
         
         const timeoutId = setTimeout(() => {
             this.currentController.abort();
@@ -449,22 +605,72 @@ class App {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             
             const data = await res.json();
-            
-            const detail = document.createElement('anime-detail');
-            detail.data = data.data;
+            const anime = data.data;
             
             this.content.innerHTML = '';
-            this.content.appendChild(detail);
+            
+            const detailContainer = document.createElement('div');
+            detailContainer.style.maxWidth = '800px';
+            detailContainer.style.margin = '2rem auto';
+            detailContainer.style.padding = '2rem';
+            detailContainer.style.background = 'white';
+            detailContainer.style.borderRadius = '8px';
+            detailContainer.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            
+            detailContainer.innerHTML = `
+                <button id="backBtn" style="background:none; border:none; color:#e94560; font-size:1rem; cursor:pointer; margin-bottom:1rem;">← Volver</button>
+                <div style="display:flex; gap:2rem; flex-wrap:wrap;">
+                    <img src="${anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url}" 
+                         style="width:200px; border-radius:8px;">
+                    <div style="flex:1;">
+                        <h2>${anime.title_english || anime.title}</h2>
+                        ${anime.title_japanese ? `<h3 style="color:#666; font-size:1rem;">${anime.title_japanese}</h3>` : ''}
+                        <div style="display:flex; gap:1rem; margin:1rem 0;">
+                            <span style="background:#e94560; color:white; padding:0.25rem 0.5rem; border-radius:4px;">⭐ ${anime.score || 'N/A'}</span>
+                            <span style="background:#4ecdc4; color:white; padding:0.25rem 0.5rem; border-radius:4px;">📺 ${anime.episodes || '?'} eps</span>
+                            <span style="background:#1a1a2e; color:white; padding:0.25rem 0.5rem; border-radius:4px;">${anime.status || '?'}</span>
+                        </div>
+                        ${anime.genres ? `<div style="margin:1rem 0;">${anime.genres.map(g => `<span style="background:#ddd; padding:0.2rem 0.5rem; border-radius:20px; margin-right:0.3rem;">${g.name}</span>`).join('')}</div>` : ''}
+                        <h3>Sinopsis</h3>
+                        <p style="line-height:1.6;">${anime.synopsis || 'No disponible'}</p>
+                        ${anime.studios?.length ? `<p style="margin-top:1rem;"><strong>Estudio:</strong> ${anime.studios[0].name}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            this.content.appendChild(detailContainer);
+            
+            document.getElementById('backBtn').addEventListener('click', () => {
+                this.navigate(this.state.previousView || 'home');
+            });
             
         } catch (error) {
             clearTimeout(timeoutId);
             this.content.innerHTML = '';
             
-            const errorState = document.createElement('error-state');
-            errorState.setAttribute('message', error.name === 'AbortError' 
+            const errorDiv = document.createElement('div');
+            errorDiv.style.textAlign = 'center';
+            errorDiv.style.padding = '2rem';
+            
+            const errorMsg = document.createElement('p');
+            errorMsg.style.color = '#e94560';
+            errorMsg.textContent = error.name === 'AbortError' 
                 ? '⏱️ La petición tardó demasiado'
-                : 'Error al cargar el detalle');
-            this.content.appendChild(errorState);
+                : 'Error al cargar el detalle';
+            
+            const retryBtn = document.createElement('button');
+            retryBtn.textContent = 'Reintentar';
+            retryBtn.style.background = '#e94560';
+            retryBtn.style.color = 'white';
+            retryBtn.style.border = 'none';
+            retryBtn.style.padding = '0.5rem 1rem';
+            retryBtn.style.borderRadius = '4px';
+            retryBtn.style.cursor = 'pointer';
+            retryBtn.addEventListener('click', () => this.showDetail(id));
+            
+            errorDiv.appendChild(errorMsg);
+            errorDiv.appendChild(retryBtn);
+            this.content.appendChild(errorDiv);
         }
     }
 }
