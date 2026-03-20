@@ -19,12 +19,6 @@ class AnimeDetail extends HTMLElement {
         const backBtn = document.createElement('button');
         backBtn.className = 'back-button';
         backBtn.innerHTML = '← Volver';
-        backBtn.style.background = 'none';
-        backBtn.style.border = 'none';
-        backBtn.style.color = '#e94560';
-        backBtn.style.fontSize = '1rem';
-        backBtn.style.cursor = 'pointer';
-        backBtn.style.marginBottom = '1rem';
         
         backBtn.addEventListener('click', () => {
             this.dispatchEvent(new CustomEvent('navigate-back', { 
@@ -36,8 +30,6 @@ class AnimeDetail extends HTMLElement {
         // Contenido principal
         const content = document.createElement('div');
         content.className = 'detail-content';
-        content.style.display = 'flex';
-        content.style.gap = '2rem';
 
         // Columna izquierda - Imagen
         const imageCol = document.createElement('div');
@@ -46,9 +38,7 @@ class AnimeDetail extends HTMLElement {
         const img = document.createElement('img');
         img.src = this.anime.images?.jpg?.large_image_url || this.anime.images?.jpg?.image_url;
         img.alt = this.anime.title;
-        img.style.width = '100%';
-        img.style.maxWidth = '300px';
-        img.style.borderRadius = '8px';
+        img.loading = 'lazy';
         imageCol.appendChild(img);
 
         // Columna derecha - Info
@@ -58,51 +48,54 @@ class AnimeDetail extends HTMLElement {
         // Título principal
         const title = document.createElement('h2');
         title.textContent = this.anime.title_english || this.anime.title;
+        title.style.fontSize = '2rem';
         title.style.marginBottom = '0.5rem';
+        title.style.color = '#333';
         infoCol.appendChild(title);
 
-        // Título japonés (si existe)
+        // Título japonés
         if (this.anime.title_japanese) {
             const japTitle = document.createElement('h3');
             japTitle.style.color = '#666';
-            japTitle.style.fontSize = '1rem';
+            japTitle.style.fontSize = '1.2rem';
             japTitle.style.marginBottom = '1rem';
+            japTitle.style.fontWeight = 'normal';
             japTitle.textContent = this.anime.title_japanese;
             infoCol.appendChild(japTitle);
         }
 
-        // Métricas rápidas
+        // Métricas
         const metrics = document.createElement('div');
         metrics.style.display = 'flex';
         metrics.style.gap = '1rem';
-        metrics.style.margin = '1rem 0';
+        metrics.style.margin = '1.5rem 0';
         metrics.style.flexWrap = 'wrap';
 
         // Score
         const score = document.createElement('span');
         score.style.background = '#e94560';
         score.style.color = 'white';
-        score.style.padding = '0.25rem 0.5rem';
-        score.style.borderRadius = '4px';
-        score.style.fontSize = '0.9rem';
+        score.style.padding = '0.5rem 1rem';
+        score.style.borderRadius = '25px';
+        score.style.fontWeight = 'bold';
         score.innerHTML = `⭐ ${this.anime.score || 'N/A'}`;
 
         // Episodios
         const episodes = document.createElement('span');
         episodes.style.background = '#4ecdc4';
         episodes.style.color = 'white';
-        episodes.style.padding = '0.25rem 0.5rem';
-        episodes.style.borderRadius = '4px';
-        episodes.style.fontSize = '0.9rem';
+        episodes.style.padding = '0.5rem 1rem';
+        episodes.style.borderRadius = '25px';
+        episodes.style.fontWeight = 'bold';
         episodes.innerHTML = `📺 ${this.anime.episodes || '?'} eps`;
 
         // Estado
         const status = document.createElement('span');
         status.style.background = '#1a1a2e';
         status.style.color = 'white';
-        status.style.padding = '0.25rem 0.5rem';
-        status.style.borderRadius = '4px';
-        status.style.fontSize = '0.9rem';
+        status.style.padding = '0.5rem 1rem';
+        status.style.borderRadius = '25px';
+        status.style.fontWeight = 'bold';
         status.textContent = this.anime.status || '?';
 
         metrics.appendChild(score);
@@ -113,17 +106,17 @@ class AnimeDetail extends HTMLElement {
         // Géneros
         if (this.anime.genres && this.anime.genres.length > 0) {
             const genresDiv = document.createElement('div');
-            genresDiv.style.margin = '1rem 0';
+            genresDiv.style.margin = '1.5rem 0';
             
             this.anime.genres.forEach(genre => {
                 const tag = document.createElement('span');
-                tag.style.background = '#ddd';
-                tag.style.padding = '0.2rem 0.5rem';
+                tag.style.background = '#e0e0e0';
+                tag.style.padding = '0.3rem 1rem';
                 tag.style.borderRadius = '20px';
-                tag.style.marginRight = '0.3rem';
-                tag.style.marginBottom = '0.3rem';
-                tag.style.fontSize = '0.8rem';
+                tag.style.marginRight = '0.5rem';
+                tag.style.marginBottom = '0.5rem';
                 tag.style.display = 'inline-block';
+                tag.style.fontSize = '0.9rem';
                 tag.textContent = genre.name;
                 genresDiv.appendChild(tag);
             });
@@ -133,42 +126,53 @@ class AnimeDetail extends HTMLElement {
 
         // Sinopsis
         const synopsisTitle = document.createElement('h3');
-        synopsisTitle.style.margin = '1rem 0 0.5rem';
+        synopsisTitle.style.margin = '1.5rem 0 0.5rem';
+        synopsisTitle.style.fontSize = '1.3rem';
+        synopsisTitle.style.color = '#333';
         synopsisTitle.textContent = 'Sinopsis';
         infoCol.appendChild(synopsisTitle);
 
         const synopsis = document.createElement('p');
-        synopsis.style.lineHeight = '1.6';
+        synopsis.style.lineHeight = '1.8';
         synopsis.style.color = '#444';
+        synopsis.style.marginBottom = '1.5rem';
         synopsis.textContent = this.anime.synopsis || 'No hay sinopsis disponible.';
         infoCol.appendChild(synopsis);
 
         // Información adicional
         const extraInfo = document.createElement('div');
         extraInfo.style.marginTop = '2rem';
-        extraInfo.style.padding = '1rem';
-        extraInfo.style.background = '#f5f5f5';
-        extraInfo.style.borderRadius = '8px';
-        extraInfo.style.fontSize = '0.95rem';
+        extraInfo.style.padding = '1.5rem';
+        extraInfo.style.background = '#f8f8f8';
+        extraInfo.style.borderRadius = '12px';
+        extraInfo.style.border = '1px solid #eee';
 
         if (this.anime.studios && this.anime.studios.length > 0) {
-            extraInfo.innerHTML += `<p style="margin-bottom: 0.5rem;"><strong>🏢 Estudio:</strong> ${this.anime.studios[0].name}</p>`;
+            extraInfo.innerHTML += `<p style="margin-bottom: 0.8rem;"><strong>🏢 Estudio:</strong> ${this.anime.studios[0].name}</p>`;
         }
         
         if (this.anime.aired?.string) {
-            extraInfo.innerHTML += `<p style="margin-bottom: 0.5rem;"><strong>📅 Emisión:</strong> ${this.anime.aired.string}</p>`;
+            extraInfo.innerHTML += `<p style="margin-bottom: 0.8rem;"><strong>📅 Fecha de emisión:</strong> ${this.anime.aired.string}</p>`;
         }
 
         if (this.anime.rank) {
-            extraInfo.innerHTML += `<p style="margin-bottom: 0.5rem;"><strong>🏆 Ranking:</strong> #${this.anime.rank}</p>`;
+            extraInfo.innerHTML += `<p style="margin-bottom: 0.8rem;"><strong>🏆 Ranking:</strong> #${this.anime.rank}</p>`;
         }
 
         if (this.anime.popularity) {
-            extraInfo.innerHTML += `<p style="margin-bottom: 0.5rem;"><strong>🔥 Popularidad:</strong> #${this.anime.popularity}</p>`;
+            extraInfo.innerHTML += `<p style="margin-bottom: 0.8rem;"><strong>🔥 Popularidad:</strong> #${this.anime.popularity}</p>`;
         }
 
         if (this.anime.source) {
-            extraInfo.innerHTML += `<p style="margin-bottom: 0.5rem;"><strong>📖 Fuente:</strong> ${this.anime.source}</p>`;
+            extraInfo.innerHTML += `<p style="margin-bottom: 0.8rem;"><strong>📖 Fuente:</strong> ${this.anime.source}</p>`;
+        }
+
+        if (this.anime.duration) {
+            extraInfo.innerHTML += `<p style="margin-bottom: 0.8rem;"><strong>⏱️ Duración:</strong> ${this.anime.duration}</p>`;
+        }
+
+        if (this.anime.rating) {
+            extraInfo.innerHTML += `<p style="margin-bottom: 0.8rem;"><strong>🔞 Clasificación:</strong> ${this.anime.rating}</p>`;
         }
 
         infoCol.appendChild(extraInfo);
