@@ -3,9 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WorldHub - Explore the anime world</title>
+    <title>Worldhub - Explore the anime world</title>
+    
+    <!-- 
+        ESTILOS INICIALES: 
+        - Reset CSS para eliminar márgenes por defecto
+        - Flexbox en body para que el footer siempre esté abajo
+        - Animaciones suaves
+    -->
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body { 
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             background: #f5f5f5;
@@ -13,20 +25,55 @@
             display: flex;
             flex-direction: column;
         }
+        
         main { 
-            flex: 1; 
+            flex: 1;  /* Hace que el main ocupe todo el espacio disponible */
+        }
+        
+        /* Animación de fadeIn para elementos que aparecen */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Scroll suave para toda la página */
+        html {
+            scroll-behavior: smooth;
         }
     </style>
+    
+    <!-- Nuestro archivo CSS con todos los estilos -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- 
+        COMPONENTE NAVBAR: 
+        Se reemplaza por el custom element definido en NavBar.js
+        Es global - aparece en todas las vistas
+    -->
     <nav-bar></nav-bar>
+    
+    <!-- 
+        CONTENEDOR PRINCIPAL:
+        Aquí se inyectan dinámicamente las vistas (home, search, detail)
+        El contenido cambia según la navegación sin recargar la página
+    -->
     <main id="app-content"></main>
     
-    <!-- FOOTER AGREGADO -->
+    <!-- 
+        FOOTER GLOBAL:
+        Aparece en todas las vistas
+        Contiene créditos y atribución a la API
+    -->
     <footer style="background: #1a1a2e; color: white; padding: 2rem; text-align: center; margin-top: 3rem;">
         <div style="max-width: 1200px; margin: 0 auto;">
-            <p style="margin-bottom: 0.5rem;">AnimeHub © 2026 - Desarrollado por [Tu Nombre]</p>
+            <p style="margin-bottom: 0.5rem;">WorldHub © 2026 - Desarrollado por Jhonmar (Jhonmita) Morales</p>
             <p style="font-size: 0.9rem; opacity: 0.8;">
                 Datos provistos por 
                 <a href="https://jikan.moe/" target="_blank" rel="noopener" 
@@ -41,15 +88,23 @@
         </div>
     </footer>
 
-    <!-- Componentes -->
-    <script src="js/components/LoadingState.js"></script>
-    <script src="js/components/ErrorState.js"></script>
-    <script src="js/components/AnimeCard.js"></script>
-    <script src="js/components/GenreFilter.js"></script>
-    <script src="js/components/AnimeDetail.js"></script>
-    <script src="js/components/NavBar.js"></script>
     
-    <!-- App principal -->
+    <!-- Componentes de estado (reutilizables) -->
+    <script src="js/components/LoadingState.js"></script>   <!-- Spinner de carga -->
+    <script src="js/components/ErrorState.js"></script>     <!-- Mensajes de error con reintento -->
+    
+    <!-- Componentes de presentación -->
+    <script src="js/components/AnimeCard.js"></script>      <!-- Tarjeta individual de anime -->
+    <script src="js/components/AnimeGrid.js"></script>      <!-- Grid contenedor de tarjetas -->
+    
+    <!-- Componentes de interacción -->
+    <script src="js/components/GenreFilter.js"></script>    <!-- Selector de géneros (filtro) -->
+    <script src="js/components/SearchBar.js"></script>      <!-- Barra de búsqueda con debounce -->
+    
+    <!-- Componentes de vista -->
+    <script src="js/components/AnimeDetail.js"></script>     <!-- Vista detalle completa -->
+    <script src="js/components/NavBar.js"></script>          <!-- Barra de navegación global -->
+    
     <script src="js/app.js"></script>
 </body>
 </html>

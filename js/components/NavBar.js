@@ -7,7 +7,7 @@ class NavBar extends HTMLElement {
     render() {
         this.innerHTML = `
             <div class="nav-container">
-                <div class="nav-logo">AnimeHub</div>
+                <div class="nav-logo">WorldHub</div>
                 <div class="nav-links">
                     <button class="nav-link active" data-view="home">Inicio</button>
                     <button class="nav-link" data-view="search">Buscar</button>

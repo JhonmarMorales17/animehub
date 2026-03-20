@@ -5,7 +5,6 @@ class App {
         this.content = document.getElementById('app-content');
         this.navBar = document.querySelector('nav-bar');
         
-        // Estado de la aplicación
         this.state = { 
             view: 'home',
             previousView: null,
@@ -14,7 +13,6 @@ class App {
             currentId: null
         };
         
-        // Controlador para abortar peticiones
         this.currentController = null;
         
         // Escuchar eventos
@@ -23,7 +21,7 @@ class App {
         document.addEventListener('navigate-back', () => this.goBack());
         document.addEventListener('retry', () => this.retry());
         
-        // Manejar botones atrás/adelante del navegador
+        // Historial del navegador
         window.addEventListener('popstate', (e) => {
             if (e.state && e.state.view) {
                 this.navigate(e.state.view, e.state.params, false);
@@ -33,34 +31,25 @@ class App {
         this.navigate('home');
     }
 
-    /**
-     * Cancela la petición actual si existe
-     */
     abortCurrentRequest() {
         if (this.currentController) {
-            console.log('Cancelando petición anterior');
             this.currentController.abort();
             this.currentController = null;
         }
     }
 
-    /**
-     * Navegación entre vistas
-     * @param {string} view - Vista a mostrar
-     * @param {any} params - Parámetros adicionales
-     * @param {boolean} pushState - Si debe guardar en historial
-     */
     navigate(view, params = null, pushState = true) {
         this.state.previousView = this.state.view;
         this.state.view = view;
-        this.navBar.setActive(view);
         
-        // Guardar en historial del navegador
+        if (this.navBar) {
+            this.navBar.setActive(view);
+        }
+        
         if (pushState) {
             history.pushState({ view, params }, '', `#${view}`);
         }
         
-        // Renderizar vista correspondiente
         if (view === 'home') this.loadHome();
         if (view === 'search') this.loadSearch();
     }
@@ -81,9 +70,6 @@ class App {
         }
     }
 
-    /**
-     * Muestra un error en el contenedor principal
-     */
     showError(message) {
         const errorEl = document.createElement('error-state');
         errorEl.setAttribute('message', message);
@@ -91,20 +77,16 @@ class App {
         this.content.appendChild(errorEl);
     }
 
-    /**
-     * VISTA HOME - Con hero section y búsqueda rápida
-     */
     async loadHome() {
-        // Cancelar petición anterior
         this.abortCurrentRequest();
-        
-        // Crear nuevo controlador
         this.currentController = new AbortController();
         
-        // Limpiar contenido
-        this.content.innerHTML = '';
+        // LIMPIAR CONTENIDO CORRECTAMENTE
+        while (this.content.firstChild) {
+            this.content.removeChild(this.content.firstChild);
+        }
 
-        // ===== HERO SECTION =====
+        // ===== HERO SECTION (creado con createElement, no innerHTML) =====
         const hero = document.createElement('section');
         hero.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
         hero.style.color = 'white';
@@ -112,48 +94,89 @@ class App {
         hero.style.textAlign = 'center';
         hero.style.marginBottom = '2rem';
         
-        hero.innerHTML = `
-            <h1 style="font-size: 2.5rem; margin-bottom: 1rem; animation: fadeIn 1s;">
-                🎌 Explora el universo del anime
-            </h1>
-            <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.95; animation: fadeIn 1.2s;">
-                Descubrí los mejores animes, los más populares y los que están en emisión
-            </p>
-            <div style="max-width: 500px; margin: 0 auto; display: flex; animation: fadeIn 1.4s;">
-                <input type="text" 
-                       id="quickSearch" 
-                       placeholder="Búsqueda rápida (ej: Naruto, One Piece...)"
-                       style="flex: 1; padding: 1rem; border: none; border-radius: 8px 0 0 8px; font-size: 1rem;">
-                <button id="quickSearchBtn" 
-                        style="padding: 1rem 2rem; background: #e94560; color: white; border: none; border-radius: 0 8px 8px 0; cursor: pointer; font-weight: bold; transition: background 0.3s;">
-                    Buscar
-                </button>
-            </div>
-        `;
+        // Crear título
+        const heroTitle = document.createElement('h1');
+        heroTitle.style.fontSize = '2.5rem';
+        heroTitle.style.marginBottom = '1rem';
+        heroTitle.textContent = '🎌 Explora el universo del anime';
+        
+        // Crear subtítulo
+        const heroSubtitle = document.createElement('p');
+        heroSubtitle.style.fontSize = '1.2rem';
+        heroSubtitle.style.marginBottom = '2rem';
+        heroSubtitle.style.opacity = '0.95';
+        heroSubtitle.textContent = 'Descubrí los mejores animes, los más populares y los que están en emisión';
+        
+        // Crear contenedor de búsqueda rápida
+        const searchContainer = document.createElement('div');
+        searchContainer.style.maxWidth = '500px';
+        searchContainer.style.margin = '0 auto';
+        searchContainer.style.display = 'flex';
+        
+        const quickInput = document.createElement('input');
+        quickInput.type = 'text';
+        quickInput.placeholder = 'Búsqueda rápida (ej: Naruto, One Piece...)';
+        quickInput.style.flex = '1';
+        quickInput.style.padding = '1rem';
+        quickInput.style.border = 'none';
+        quickInput.style.borderRadius = '8px 0 0 8px';
+        quickInput.style.fontSize = '1rem';
+        
+        const quickBtn = document.createElement('button');
+        quickBtn.textContent = 'Buscar';
+        quickBtn.style.padding = '1rem 2rem';
+        quickBtn.style.background = '#e94560';
+        quickBtn.style.color = 'white';
+        quickBtn.style.border = 'none';
+        quickBtn.style.borderRadius = '0 8px 8px 0';
+        quickBtn.style.cursor = 'pointer';
+        quickBtn.style.fontWeight = 'bold';
+        
+        quickBtn.addEventListener('click', () => {
+            const query = quickInput.value.trim();
+            if (query) {
+                this.state.searchQuery = query;
+                this.navigate('search');
+            }
+        });
+        
+        quickInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = quickInput.value.trim();
+                if (query) {
+                    this.state.searchQuery = query;
+                    this.navigate('search');
+                }
+            }
+        });
+        
+        searchContainer.appendChild(quickInput);
+        searchContainer.appendChild(quickBtn);
+        
+        hero.appendChild(heroTitle);
+        hero.appendChild(heroSubtitle);
+        hero.appendChild(searchContainer);
         
         this.content.appendChild(hero);
 
-        // ===== SECCIÓN TOP ANIME =====
+        // ===== TÍTULO DE SECCIÓN =====
         const sectionTitle = document.createElement('h2');
         sectionTitle.style.padding = '0 1rem';
         sectionTitle.style.marginBottom = '1rem';
         sectionTitle.style.fontSize = '1.8rem';
         sectionTitle.style.color = '#333';
-        sectionTitle.innerHTML = '🔥 Top Animes';
+        sectionTitle.textContent = '🔥 Top Animes';
         this.content.appendChild(sectionTitle);
         
-        // Loading state
+        // ===== LOADING =====
         const loading = document.createElement('loading-state');
         this.content.appendChild(loading);
         
-        // Timeout de 8 segundos
         const timeoutId = setTimeout(() => {
-            console.log('Timeout: cancelando petición');
             this.currentController.abort();
         }, 8000);
 
         try {
-            console.log('Cargando top animes...');
             const res = await fetch(`${API_URL}/top/anime?limit=24`, {
                 signal: this.currentController.signal
             });
@@ -165,9 +188,11 @@ class App {
             const data = await res.json();
             
             // Remover loading
-            this.content.removeChild(loading);
+            if (this.content.contains(loading)) {
+                this.content.removeChild(loading);
+            }
             
-            // Crear grid de animes
+            // Crear grid con los resultados
             const grid = document.createElement('div');
             grid.className = 'grid-container';
             
@@ -179,114 +204,128 @@ class App {
             
             this.content.appendChild(grid);
             
-            // Eventos de búsqueda rápida
-            document.getElementById('quickSearchBtn').addEventListener('click', () => {
-                const query = document.getElementById('quickSearch').value.trim();
-                if (query) {
-                    this.state.searchQuery = query;
-                    this.navigate('search');
-                }
-            });
-            
-            document.getElementById('quickSearch').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    const query = e.target.value.trim();
-                    if (query) {
-                        this.state.searchQuery = query;
-                        this.navigate('search');
-                    }
-                }
-            });
-            
         } catch (error) {
             clearTimeout(timeoutId);
-            this.content.removeChild(loading);
             
-            console.error('Error:', error);
-            
-            if (error.name === 'AbortError') {
-                this.showError('⏱️ La petición tardó demasiado. Hacé click en reintentar.');
-            } else {
-                this.showError('Error al cargar animes. Verificá tu conexión.');
+            if (this.content.contains(loading)) {
+                this.content.removeChild(loading);
             }
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.style.textAlign = 'center';
+            errorDiv.style.padding = '2rem';
+            
+            const errorMsg = document.createElement('p');
+            errorMsg.style.color = '#e94560';
+            errorMsg.style.marginBottom = '1rem';
+            errorMsg.textContent = error.name === 'AbortError' 
+                ? '⏱️ La petición tardó demasiado. Hacé click en reintentar.'
+                : 'Error al cargar animes. Verificá tu conexión.';
+            
+            const retryBtn = document.createElement('button');
+            retryBtn.textContent = 'Reintentar';
+            retryBtn.style.background = '#e94560';
+            retryBtn.style.color = 'white';
+            retryBtn.style.border = 'none';
+            retryBtn.style.padding = '0.5rem 1rem';
+            retryBtn.style.borderRadius = '4px';
+            retryBtn.style.cursor = 'pointer';
+            retryBtn.addEventListener('click', () => this.loadHome());
+            
+            errorDiv.appendChild(errorMsg);
+            errorDiv.appendChild(retryBtn);
+            this.content.appendChild(errorDiv);
         }
     }
 
-    /**
-     * VISTA SEARCH - Con debounce y filtros
-     */
     loadSearch() {
-        this.content.innerHTML = `
-            <div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
-                <h2 style="margin-bottom: 1rem; color: #333; font-size: 2rem;">
-                    🔍 Buscar Anime
-                </h2>
-                
-                <!-- Barra de búsqueda -->
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <input type="text" 
-                           id="searchInput" 
-                           placeholder="Ej: Naruto, One Piece, Dragon Ball..." 
-                           value="${this.state.searchQuery}"
-                           style="flex:1; padding:1rem; border:2px solid #ddd; border-radius:8px; font-size:1rem; transition: border-color 0.3s;">
-                    <button id="searchBtn" 
-                            style="background:#e94560; color:white; border:none; padding:0 2rem; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1rem; transition: background 0.3s;">
-                        Buscar
-                    </button>
-                </div>
-                
-                <!-- Filtro de géneros -->
-                <genre-filter id="genreFilter"></genre-filter>
-                
-                <!-- Resultados -->
-                <div id="searchResults" style="min-height:200px; margin-top:2rem;"></div>
-            </div>
-        `;
-
-        const input = document.getElementById('searchInput');
-        const btn = document.getElementById('searchBtn');
-        const genreFilter = document.getElementById('genreFilter');
-        const results = document.getElementById('searchResults');
+        // LIMPIAR CONTENIDO CORRECTAMENTE
+        while (this.content.firstChild) {
+            this.content.removeChild(this.content.firstChild);
+        }
+        
+        const container = document.createElement('div');
+        container.style.padding = '2rem';
+        container.style.maxWidth = '1200px';
+        container.style.margin = '0 auto';
+        
+        // Título
+        const title = document.createElement('h2');
+        title.style.marginBottom = '1rem';
+        title.style.color = '#333';
+        title.style.fontSize = '2rem';
+        title.textContent = '🔍 Buscar Anime';
+        container.appendChild(title);
+        
+        // Contenedor de búsqueda
+        const searchContainer = document.createElement('div');
+        searchContainer.style.display = 'flex';
+        searchContainer.style.gap = '0.5rem';
+        searchContainer.style.marginBottom = '1rem';
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Ej: Naruto, One Piece, Dragon Ball...';
+        input.value = this.state.searchQuery;
+        input.style.flex = '1';
+        input.style.padding = '1rem';
+        input.style.border = '2px solid #ddd';
+        input.style.borderRadius = '8px';
+        input.style.fontSize = '1rem';
+        
+        const btn = document.createElement('button');
+        btn.textContent = 'Buscar';
+        btn.style.background = '#e94560';
+        btn.style.color = 'white';
+        btn.style.border = 'none';
+        btn.style.padding = '0 2rem';
+        btn.style.borderRadius = '8px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontWeight = 'bold';
+        
+        searchContainer.appendChild(input);
+        searchContainer.appendChild(btn);
+        container.appendChild(searchContainer);
+        
+        // Filtro de géneros
+        const genreFilter = document.createElement('genre-filter');
+        container.appendChild(genreFilter);
+        
+        // Contenedor de resultados
+        const resultsContainer = document.createElement('div');
+        resultsContainer.style.minHeight = '200px';
+        resultsContainer.style.marginTop = '2rem';
+        container.appendChild(resultsContainer);
+        
+        this.content.appendChild(container);
         
         let searchTimeout;
-
-        // Escuchar cambios en el filtro de género
+        
+        // Escuchar cambios de género
         genreFilter.addEventListener('genre-change', (e) => {
             this.state.currentGenre = e.detail.genreId;
-            if (input.value.trim() || this.state.currentGenre) {
-                performSearch();
-            } else {
-                results.innerHTML = '<p style="text-align:center; color:#666;">🔍 Escribí algo o seleccioná un género...</p>';
-            }
+            performSearch();
         });
-
-        /**
-         * Función de búsqueda con AbortController
-         */
+        
         const performSearch = async () => {
             const query = input.value.trim();
             this.state.searchQuery = query;
             
-            // Cancelar búsqueda anterior
             this.abortCurrentRequest();
-            
-            // Crear nuevo controlador
             this.currentController = new AbortController();
             
-            results.innerHTML = '<loading-state></loading-state>';
+            resultsContainer.innerHTML = '';
+            const loading = document.createElement('loading-state');
+            resultsContainer.appendChild(loading);
             
-            // Timeout de 8 segundos
             const timeoutId = setTimeout(() => {
                 this.currentController.abort();
             }, 8000);
 
             try {
-                // Construir URL con parámetros
                 let url = `${API_URL}/anime?limit=24`;
                 if (query) url += `&q=${encodeURIComponent(query)}`;
                 if (this.state.currentGenre) url += `&genres=${this.state.currentGenre}`;
-                
-                console.log('Buscando:', url);
                 
                 const res = await fetch(url, {
                     signal: this.currentController.signal
@@ -298,26 +337,29 @@ class App {
                 
                 const data = await res.json();
                 
-                results.innerHTML = '';
+                resultsContainer.innerHTML = '';
                 
                 if (!data.data || data.data.length === 0) {
-                    results.innerHTML = `
-                        <div style="text-align:center; padding:3rem;">
-                            <p style="color:#666; font-size:1.2rem;">😢 No se encontraron animes</p>
-                            <p style="color:#999; margin-top:0.5rem;">Probá con otra búsqueda o filtro</p>
-                        </div>
-                    `;
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.style.textAlign = 'center';
+                    emptyMsg.style.padding = '3rem';
+                    
+                    const emptyP = document.createElement('p');
+                    emptyP.style.color = '#666';
+                    emptyP.style.fontSize = '1.2rem';
+                    emptyP.textContent = '😢 No se encontraron animes';
+                    
+                    const emptySub = document.createElement('p');
+                    emptySub.style.color = '#999';
+                    emptySub.style.marginTop = '0.5rem';
+                    emptySub.textContent = 'Probá con otra búsqueda o filtro';
+                    
+                    emptyMsg.appendChild(emptyP);
+                    emptyMsg.appendChild(emptySub);
+                    resultsContainer.appendChild(emptyMsg);
                     return;
                 }
                 
-                // Mostrar cantidad de resultados
-                const resultCount = document.createElement('p');
-                resultCount.style.marginBottom = '1rem';
-                resultCount.style.color = '#666';
-                resultCount.textContent = `📊 ${data.data.length} resultados encontrados`;
-                results.appendChild(resultCount);
-                
-                // Grid de resultados
                 const grid = document.createElement('div');
                 grid.className = 'grid-container';
                 
@@ -327,33 +369,37 @@ class App {
                     grid.appendChild(card);
                 });
                 
-                results.appendChild(grid);
+                resultsContainer.appendChild(grid);
                 
             } catch (error) {
                 clearTimeout(timeoutId);
+                resultsContainer.innerHTML = '';
                 
-                console.error('Error búsqueda:', error);
-                
-                if (error.name === 'AbortError') {
-                    results.innerHTML = '<error-state message="⏱️ La búsqueda tardó demasiado"></error-state>';
-                } else {
-                    results.innerHTML = '<error-state message="Error en la búsqueda"></error-state>';
-                }
+                const errorState = document.createElement('error-state');
+                errorState.setAttribute('message', error.name === 'AbortError' 
+                    ? '⏱️ La búsqueda tardó demasiado'
+                    : 'Error en la búsqueda');
+                resultsContainer.appendChild(errorState);
             }
         };
-
-        // DEBOUNCE: 500ms después de dejar de escribir
+        
+        // Debounce
         input.addEventListener('input', () => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
                 if (input.value.trim() || this.state.currentGenre) {
                     performSearch();
                 } else {
-                    results.innerHTML = '<p style="text-align:center; color:#666;">🔍 Escribí algo para buscar...</p>';
+                    resultsContainer.innerHTML = '';
+                    const emptyMsg = document.createElement('p');
+                    emptyMsg.style.textAlign = 'center';
+                    emptyMsg.style.color = '#666';
+                    emptyMsg.textContent = '🔍 Escribí algo para buscar o seleccioná un género...';
+                    resultsContainer.appendChild(emptyMsg);
                 }
             }, 500);
         });
-
+        
         btn.addEventListener('click', performSearch);
         
         input.addEventListener('keypress', (e) => {
@@ -362,35 +408,38 @@ class App {
                 performSearch();
             }
         });
-
-        // Si hay una búsqueda previa, ejecutarla
+        
+        // Búsqueda inicial
         if (this.state.searchQuery) {
             performSearch();
         } else {
-            results.innerHTML = '<p style="text-align:center; color:#666;">🔍 Escribí algo para buscar o seleccioná un género...</p>';
+            const emptyMsg = document.createElement('p');
+            emptyMsg.style.textAlign = 'center';
+            emptyMsg.style.color = '#666';
+            emptyMsg.textContent = '🔍 Escribí algo para buscar o seleccioná un género...';
+            resultsContainer.appendChild(emptyMsg);
         }
     }
 
-    /**
-     * VISTA DETAIL - Detalle de anime
-     */
     async showDetail(id) {
         this.state.currentId = id;
         
-        // Cancelar petición anterior
         this.abortCurrentRequest();
-        
-        // Nuevo controlador
         this.currentController = new AbortController();
         
-        this.content.innerHTML = '<loading-state></loading-state>';
+        // LIMPIAR CONTENIDO
+        while (this.content.firstChild) {
+            this.content.removeChild(this.content.firstChild);
+        }
+        
+        const loading = document.createElement('loading-state');
+        this.content.appendChild(loading);
         
         const timeoutId = setTimeout(() => {
             this.currentController.abort();
         }, 8000);
 
         try {
-            console.log('Cargando detalle del anime:', id);
             const res = await fetch(`${API_URL}/anime/${id}/full`, {
                 signal: this.currentController.signal
             });
@@ -409,19 +458,18 @@ class App {
             
         } catch (error) {
             clearTimeout(timeoutId);
+            this.content.innerHTML = '';
             
-            console.error('Error detalle:', error);
-            
-            if (error.name === 'AbortError') {
-                this.showError('⏱️ La petición tardó demasiado. Hacé click en reintentar.');
-            } else {
-                this.showError('Error al cargar el detalle');
-            }
+            const errorState = document.createElement('error-state');
+            errorState.setAttribute('message', error.name === 'AbortError' 
+                ? '⏱️ La petición tardó demasiado'
+                : 'Error al cargar el detalle');
+            this.content.appendChild(errorState);
         }
     }
 }
 
-// Iniciar la aplicación cuando el DOM esté listo
+// Iniciar la aplicación
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
 });
